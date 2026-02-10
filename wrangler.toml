@@ -1,0 +1,22 @@
+name = "bookme"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Static assets (public/ directory)
+[assets]
+directory = "public"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "bookme-db"
+database_id = "362d7520-a159-43ba-8447-1b8562531632"
+
+# Environment variables (secrets は wrangler secret put で設定)
+# [vars]
+# GOOGLE_CALENDAR_ID = "your-calendar@gmail.com"
+
+# Secrets (wrangler secret put で設定):
+# - GOOGLE_SERVICE_ACCOUNT_JSON  (サービスアカウントJSONキー)
+# - RESEND_API_KEY               (Resend APIキー)
+# - ADMIN_PASSWORD               (管理者パスワード)

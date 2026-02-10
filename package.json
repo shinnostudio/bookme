@@ -1,0 +1,18 @@
+{
+  "name": "bookme-v2",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 execute bookme-db --local --file=migrations/0001_init.sql",
+    "db:migrate:remote": "wrangler d1 execute bookme-db --remote --file=migrations/0001_init.sql",
+    "setup": "npm run db:migrate:local && echo 'Local DB initialized!'",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.101.0"
+  }
+}

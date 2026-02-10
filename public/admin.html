@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookMe - 管理画面</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #F0F4F8;
+      color: #1E293B;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --primary-light: #EEF2FF;
+      --surface: #FFFFFF;
+      --bg: #F0F4F8;
+      --text: #1E293B;
+      --text-secondary: #64748B;
+      --text-muted: #94A3B8;
+      --border: #E2E8F0;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+      --success: #059669;
+      --success-light: #ECFDF5;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* ===== Login ===== */
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--primary);
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    }
+    .login-icon svg { width: 28px; height: 28px; fill: white; }
+    .login-card h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .login-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .login-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.15s;
+      margin-bottom: 16px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .login-btn:hover { background: var(--primary-hover); }
+    .login-error {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* ===== Admin Layout ===== */
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0;
+      margin-bottom: 8px;
+    }
+    .admin-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .admin-logo {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .admin-logo svg { width: 22px; height: 22px; fill: white; }
+    .admin-title { font-size: 1.2rem; font-weight: 700; }
+    .admin-subtitle { font-size: 0.8rem; color: var(--text-secondary); }
+    .logout-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+    .logout-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-light);
+    }
+
+    /* ===== Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 4px;
+      box-shadow: var(--shadow);
+    }
+    .tab {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* ===== Card ===== */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 svg { width: 20px; height: 20px; fill: var(--primary); }
+
+    /* ===== Form ===== */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .form-group .hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.15s;
+      background: var(--surface);
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+    select.form-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748B' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .days-checkboxes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .day-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .day-checkbox input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+    }
+    .day-checkbox label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .save-btn {
+      padding: 12px 32px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .save-btn:hover { background: var(--primary-hover); }
+    .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .save-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 16px;
+      font-size: 0.85rem;
+      color: var(--success);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .save-status.show { opacity: 1; }
+
+    /* ===== Bookings Table ===== */
+    .bookings-table-wrap {
+      overflow-x: auto;
+      margin: 0 -28px -28px;
+      padding: 0 28px 28px;
+    }
+    .bookings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .bookings-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .bookings-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .bookings-table tr:last-child td { border-bottom: none; }
+    .bookings-table tr:hover td { background: #FAFBFC; }
+    .booking-name { font-weight: 600; }
+    .booking-email { color: var(--primary); font-size: 0.82rem; }
+    .booking-message {
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    .booking-count {
+      font-size: 0.8rem;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1E293B;
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 3000;
+      transition: transform 0.3s;
+    }
+    .toast.error { background: var(--danger); }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ===== Home Link ===== */
+    .home-link {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      opacity: 0.35;
+      transition: opacity 0.2s, color 0.2s;
+      text-decoration: none;
+      z-index: 100;
+    }
+    .home-link svg { width: 22px; height: 22px; }
+    .home-link:hover {
+      opacity: 1;
+      color: var(--primary);
+    }
+
+    /* ===== Spinner ===== */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 600px) {
+      .container { padding: 12px; }
+      .card { padding: 20px; }
+      .admin-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+      .bookings-table { font-size: 0.8rem; }
+      .bookings-table th, .bookings-table td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Login Screen -->
+  <div class="login-wrapper" id="loginScreen">
+    <div class="login-card">
+      <div class="login-icon">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      </div>
+      <h1>BookMe 管理画面</h1>
+      <p>管理パスワードを入力してください</p>
+      <form onsubmit="login(event)">
+        <input type="password" class="login-input" id="passwordInput" placeholder="パスワード" autofocus>
+        <button type="submit" class="login-btn" id="loginBtn">ログイン</button>
+      </form>
+      <div class="login-error" id="loginError">パスワードが正しくありません</div>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div id="adminDashboard" style="display:none;">
+    <div class="container">
+      <!-- Header -->
+      <div class="admin-header">
+        <div class="admin-header-left">
+          <div class="admin-logo">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/></svg>
+          </div>
+          <div>
+            <div class="admin-title">BookMe 管理画面</div>
+            <div class="admin-subtitle" id="adminEmail"></div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">ログアウト</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" id="tabSettings" onclick="switchTab('settings')">
+          設定
+        </button>
+        <button class="tab" id="tabBookings" onclick="switchTab('bookings')">
+          予約一覧
+        </button>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="settingsView">
+        <form onsubmit="saveSettings(event)">
+          <!-- Basic Settings -->
+          <div class="card">
+            <h2>
+              <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+              基本設定
+            </h2>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>表示名</label>
+                <input type="text" class="form-input" id="settOwnerName" placeholder="山田 太郎">
+                <div class="hint">予約ページに表示される名前</div>
+              </div>
+              <div class="form-group">
+                <label>通知先メールアドレス</label>
+                <input type="email" class="form-input" id="settOwnerEmail" placeholder="you@example.com">
+                <div class="hint">予約通知の送信先</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Google カレンダー ID</label>
+              <input type="text" class="form-input" id="settCalendarId" placeholder="you@gmail.com">
+              <div class="hint">通常はGmailアドレスです。別のカレンダーを使う場合は、カレンダーの設定画面からIDを確認してください。</div>
+            </div>
+          </div>
+
+          <!-- Schedule Settings -->
+          <div class="card">
+            <h2>
+              <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+              スケジュール設定
+            </h2>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>予約の長さ（分）</label>
+                <select class="form-input" id="settDuration">
+                  <option value="15">15分</option>
+                  <option value="30">30分</option>
+                  <option value="45">45分</option>
+                  <option value="60">60分（1時間）</option>
+                  <option value="90">90分（1.5時間）</option>
+                  <option value="120">120分（2時間）</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>公開期間（日数）</label>
+                <select class="form-input" id="settMaxDays">
+                  <option value="7">7日間（1週間）</option>
+                  <option value="14">14日間（2週間）</option>
+                  <option value="30">30日間（約1ヶ月）</option>
+                  <option value="60">60日間（約2ヶ月）</option>
+                  <option value="90">90日間（約3ヶ月）</option>
+                </select>
+                <div class="hint">本日から何日先まで予約を受け付けるか</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>受付時間帯</label>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <select class="form-input" id="settStartHour" style="width:auto;min-width:100px;">
+                </select>
+                <span style="color:var(--text-secondary);font-weight:500;">〜</span>
+                <select class="form-input" id="settEndHour" style="width:auto;min-width:100px;">
+                </select>
+                <select class="form-input" id="settTimezone" style="width:auto;min-width:220px;">
+                  <option value="">自動（カレンダー準拠）</option>
+                  <option value="Pacific/Honolulu">ハワイ (HST)</option>
+                  <option value="America/Anchorage">アラスカ (AKST)</option>
+                  <option value="America/Los_Angeles">米国太平洋 (PST)</option>
+                  <option value="America/Denver">米国山岳 (MST)</option>
+                  <option value="America/Chicago">米国中部 (CST)</option>
+                  <option value="America/New_York">米国東部 (EST)</option>
+                  <option value="America/Sao_Paulo">ブラジル (BRT)</option>
+                  <option value="Europe/London">ロンドン (GMT)</option>
+                  <option value="Europe/Paris">パリ / ベルリン (CET)</option>
+                  <option value="Europe/Helsinki">ヘルシンキ (EET)</option>
+                  <option value="Asia/Dubai">ドバイ (GST)</option>
+                  <option value="Asia/Kolkata">インド (IST)</option>
+                  <option value="Asia/Bangkok">バンコク (ICT)</option>
+                  <option value="Asia/Shanghai">中国 / シンガポール (CST)</option>
+                  <option value="Asia/Tokyo">日本 (JST)</option>
+                  <option value="Australia/Sydney">シドニー (AEST)</option>
+                  <option value="Pacific/Auckland">ニュージーランド (NZST)</option>
+                </select>
+              </div>
+              <div class="hint">例: 09:00 〜 17:00 日本 (JST) → 日本時間の9時〜17時が予約受付時間になります</div>
+            </div>
+
+            <div class="form-group">
+              <label>受付曜日</label>
+              <div class="days-checkboxes" id="daysCheckboxes">
+                <div class="day-checkbox"><input type="checkbox" id="day0" value="0"><label for="day0">日</label></div>
+                <div class="day-checkbox"><input type="checkbox" id="day1" value="1"><label for="day1">月</label></div>
+                <div class="day-checkbox"><input type="checkbox" id="day2" value="2"><label for="day2">火</label></div>
+                <div class="day-checkbox"><input type="checkbox" id="day3" value="3"><label for="day3">水</label></div>
+                <div class="day-checkbox"><input type="checkbox" id="day4" value="4"><label for="day4">木</label></div>
+                <div class="day-checkbox"><input type="checkbox" id="day5" value="5"><label for="day5">金</label></div>
+                <div class="day-checkbox"><input type="checkbox" id="day6" value="6"><label for="day6">土</label></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
+            <button type="submit" class="save-btn" id="saveBtn">
+              設定を保存
+            </button>
+            <span class="save-status" id="saveStatus">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              保存しました
+            </span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Bookings Tab -->
+      <div id="bookingsView" style="display:none;">
+        <div class="card">
+          <h2>
+            <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            予約一覧
+            <span class="booking-count" id="bookingCount">0件</span>
+          </h2>
+
+          <div class="bookings-table-wrap">
+            <div class="empty-state" id="bookingsEmpty">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm0 15l-4-4 1.41-1.41L12 15.17l4.59-4.58L18 12l-6 6z"/></svg>
+              <p>まだ予約がありません</p>
+            </div>
+            <table class="bookings-table" id="bookingsTable" style="display:none;">
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>時間</th>
+                  <th>お名前</th>
+                  <th>メール</th>
+                  <th>メッセージ</th>
+                  <th>予約受付日</th>
+                </tr>
+              </thead>
+              <tbody id="bookingsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Home Link -->
+  <a href="/" class="home-link" title="予約ページに戻る">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+  </a>
+
+  <script>
+    /* ===== API Helper ===== */
+    var API_BASE = '';
+    var adminToken = '';
+
+    async function api(path, options) {
+      options = options || {};
+      var res = await fetch(API_BASE + path, options);
+      if (!res.ok) {
+        var err = await res.json().catch(function() { return { error: 'Unknown error' }; });
+        throw new Error(err.error || err.message || 'Request failed');
+      }
+      return res.json();
+    }
+
+    function authHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + adminToken
+      };
+    }
+
+    /* ===== Initialize Select Options ===== */
+    function initSelects() {
+      var startSel = document.getElementById('settStartHour');
+      var endSel = document.getElementById('settEndHour');
+      for (var h = 0; h <= 23; h++) {
+        var label = (h < 10 ? '0' : '') + h + ':00';
+        startSel.innerHTML += '<option value="' + h + '">' + label + '</option>';
+        endSel.innerHTML += '<option value="' + h + '">' + label + '</option>';
+      }
+    }
+    initSelects();
+
+    /* ===== Login ===== */
+    async function login(e) {
+      e.preventDefault();
+      var pw = document.getElementById('passwordInput').value;
+      if (!pw) return;
+
+      document.getElementById('loginBtn').textContent = '確認中...';
+      document.getElementById('loginBtn').disabled = true;
+      document.getElementById('loginError').style.display = 'none';
+
+      try {
+        // First, authenticate to get token
+        var authResult = await api('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        });
+
+        adminToken = authResult.token;
+
+        // Then fetch admin settings
+        var settings = await api('/api/admin/settings', {
+          headers: authHeaders()
+        });
+
+        showDashboard(settings);
+      } catch (err) {
+        document.getElementById('loginBtn').textContent = 'ログイン';
+        document.getElementById('loginBtn').disabled = false;
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    function showDashboard(settings) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminDashboard').style.display = 'block';
+
+      // Populate settings form
+      document.getElementById('settOwnerName').value = settings.ownerName || '';
+      document.getElementById('settOwnerEmail').value = settings.ownerEmail || '';
+      document.getElementById('settCalendarId').value = settings.calendarId || '';
+      document.getElementById('settTimezone').value = settings.timezone || '';
+      document.getElementById('settDuration').value = String(settings.duration || 60);
+      document.getElementById('settMaxDays').value = String(settings.maxDays || 30);
+      document.getElementById('settStartHour').value = String(settings.startHour || 9);
+      document.getElementById('settEndHour').value = String(settings.endHour || 17);
+
+      // 有効タイムゾーンを表示
+      var effTz = settings.effectiveTimezone || 'Asia/Tokyo';
+      document.getElementById('adminEmail').textContent =
+        (settings.ownerEmail || '') + '  (' + effTz + ')';
+
+      // Set day checkboxes
+      var days = settings.availableDays || [1,2,3,4,5];
+      for (var i = 0; i <= 6; i++) {
+        document.getElementById('day' + i).checked = days.indexOf(i) !== -1;
+      }
+    }
+
+    function logout() {
+      adminToken = '';
+      document.getElementById('adminDashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('loginBtn').textContent = 'ログイン';
+      document.getElementById('loginBtn').disabled = false;
+    }
+
+    /* ===== Tabs ===== */
+    function switchTab(tab) {
+      document.getElementById('tabSettings').classList.toggle('active', tab === 'settings');
+      document.getElementById('tabBookings').classList.toggle('active', tab === 'bookings');
+      document.getElementById('settingsView').style.display = tab === 'settings' ? 'block' : 'none';
+      document.getElementById('bookingsView').style.display = tab === 'bookings' ? 'block' : 'none';
+
+      if (tab === 'bookings') {
+        loadBookings();
+      }
+    }
+
+    /* ===== Save Settings ===== */
+    async function saveSettings(e) {
+      e.preventDefault();
+
+      var availDays = [];
+      for (var i = 0; i <= 6; i++) {
+        if (document.getElementById('day' + i).checked) {
+          availDays.push(i);
+        }
+      }
+
+      var newSettings = {
+        ownerName: document.getElementById('settOwnerName').value.trim(),
+        ownerEmail: document.getElementById('settOwnerEmail').value.trim(),
+        calendarId: document.getElementById('settCalendarId').value.trim(),
+        timezone: document.getElementById('settTimezone').value,
+        duration: parseInt(document.getElementById('settDuration').value, 10),
+        maxDays: parseInt(document.getElementById('settMaxDays').value, 10),
+        startHour: parseInt(document.getElementById('settStartHour').value, 10),
+        endHour: parseInt(document.getElementById('settEndHour').value, 10),
+        availableDays: availDays
+      };
+
+      // Validation
+      if (newSettings.startHour >= newSettings.endHour) {
+        showToast('受付開始時刻は終了時刻より前に設定してください', true);
+        return;
+      }
+      if (availDays.length === 0) {
+        showToast('少なくとも1つの曜日を選択してください', true);
+        return;
+      }
+
+      document.getElementById('saveBtn').disabled = true;
+      document.getElementById('saveBtn').textContent = '保存中...';
+
+      try {
+        var result = await api('/api/admin/settings', {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify(newSettings)
+        });
+
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveBtn').textContent = '設定を保存';
+        document.getElementById('adminEmail').textContent = newSettings.ownerEmail;
+
+        var status = document.getElementById('saveStatus');
+        status.classList.add('show');
+        setTimeout(function() { status.classList.remove('show'); }, 3000);
+      } catch (err) {
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveBtn').textContent = '設定を保存';
+        showToast('保存に失敗しました: ' + err.message, true);
+      }
+    }
+
+    /* ===== Load Bookings ===== */
+    async function loadBookings() {
+      document.getElementById('bookingsEmpty').style.display = 'block';
+      document.getElementById('bookingsTable').style.display = 'none';
+      document.getElementById('bookingsEmpty').innerHTML =
+        '<div class="spinner" style="margin:0 auto 12px;"></div><p>読み込み中...</p>';
+
+      try {
+        var bookings = await api('/api/admin/bookings', {
+          headers: authHeaders()
+        });
+
+        if (!bookings || bookings.length === 0) {
+          document.getElementById('bookingsEmpty').innerHTML =
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm0 15l-4-4 1.41-1.41L12 15.17l4.59-4.58L18 12l-6 6z"/></svg>'
+            + '<p>まだ予約がありません</p>';
+          document.getElementById('bookingsEmpty').style.display = 'block';
+          document.getElementById('bookingsTable').style.display = 'none';
+          document.getElementById('bookingCount').textContent = '0件';
+          return;
+        }
+
+        document.getElementById('bookingCount').textContent = bookings.length + '件';
+        document.getElementById('bookingsEmpty').style.display = 'none';
+        document.getElementById('bookingsTable').style.display = 'table';
+
+        var tbody = document.getElementById('bookingsBody');
+        tbody.innerHTML = '';
+
+        bookings.forEach(function(b) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + escapeHtml(String(b.date || '')) + '</td>'
+            + '<td>' + escapeHtml(String(b.startTime || '')) + ' - ' + escapeHtml(String(b.endTime || '')) + '</td>'
+            + '<td class="booking-name">' + escapeHtml(String(b.name || '')) + '</td>'
+            + '<td class="booking-email">' + escapeHtml(String(b.email || '')) + '</td>'
+            + '<td class="booking-message" title="' + escapeHtml(String(b.message || '')) + '">' + escapeHtml(String(b.message || '-')) + '</td>'
+            + '<td>' + escapeHtml(String(b.bookedAt || '')) + '</td>';
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        document.getElementById('bookingsEmpty').innerHTML =
+          '<p style="color:var(--danger)">読み込みに失敗しました</p>';
+      }
+    }
+
+    /* ===== Utilities ===== */
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(message, isError) {
+      var toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast' + (isError ? ' error' : '');
+      toast.classList.add('show');
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
