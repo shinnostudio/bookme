@@ -1,100 +1,161 @@
-# BookMe v2 - Cloudflare Workers + D1
+# BookMe SaaS - オンライン予約システム
 
-GAS版からの移行版。Cloudflare Workers + D1 (SQLite) で動作する予約システム。
+Google カレンダー連携のオンライン予約システム。Cloudflare Workers + D1 で動作するマルチテナント SaaS。
 
-## 構成
+## アーキテクチャ
 
-- **バックエンド**: Cloudflare Workers (TypeScript)
-- **データベース**: Cloudflare D1 (SQLite)
-- **カレンダー**: Google Calendar API (サービスアカウント)
+- **Backend**: Cloudflare Workers (TypeScript)
+- **Database**: Cloudflare D1 (SQLite)
+- **認証**: Google OAuth 2.0
+- **カレンダー**: Google Calendar API（ユーザー OAuth トークン）
 - **メール**: Resend API
-- **フロントエンド**: 静的HTML (Workers から配信)
+- **フロントエンド**: Vanilla HTML/CSS/JS（静的ファイル）
 
-## セットアップ手順
+## URL 構成
+
+| パス | 説明 |
+|------|------|
+| `/` | ランディングページ |
+| `/dashboard` | ダッシュボード（ログイン必須） |
+| `/:slug` | ユーザーの公開予約ページ |
+| `/auth/google` | Google OAuth 開始 |
+| `/auth/callback` | OAuth コールバック |
+| `/api/u/:slug/*` | 公開 API |
+| `/api/dashboard/*` | ダッシュボード API（認証必須） |
+
+## セットアップ
 
 ### 1. 前提条件
 
+- [Node.js](https://nodejs.org/) 18+
+- [Cloudflare アカウント](https://dash.cloudflare.com/)
+- [Google Cloud Console](https://console.cloud.google.com/) アカウント
+- [Resend](https://resend.com/) アカウント
+
+### 2. 依存関係のインストール
+
 ```bash
-npm install -g wrangler
-wrangler login
+cd bookme-v2
+npm install
 ```
 
-### 2. D1 データベース作成
+### 3. Google Cloud Console の設定
+
+#### OAuth 同意画面
+1. [Google Cloud Console](https://console.cloud.google.com/) → 「APIs & Services」→「OAuth consent screen」
+2. ユーザーの種類: **外部**
+3. アプリ名: `BookMe`
+4. スコープを追加:
+   - `openid`
+   - `email`
+   - `profile`
+   - `https://www.googleapis.com/auth/calendar`
+5. テストユーザーにあなたの Google アカウントを追加
+
+#### OAuth クライアント ID
+1. 「APIs & Services」→「Credentials」→「+ CREATE CREDENTIALS」→「OAuth 2.0 Client ID」
+2. アプリケーションの種類: **ウェブアプリケーション**
+3. 名前: `BookMe`
+4. 承認済みリダイレクト URI: `https://あなたのドメイン/auth/callback`
+5. **クライアント ID** と **クライアント シークレット** をメモ
+
+#### Google Calendar API の有効化
+1. 「APIs & Services」→「Library」→「Google Calendar API」→「有効にする」
+
+### 4. D1 データベースの作成とマイグレーション
 
 ```bash
-wrangler d1 create bookme-db
+# D1 データベースの作成（初回のみ）
+npx wrangler d1 create bookme-db
+
+# wrangler.toml の database_id を更新
+
+# マイグレーションの実行
+npx wrangler d1 execute bookme-db --remote --file=migrations/0001_init.sql
+npx wrangler d1 execute bookme-db --remote --file=migrations/0002_saas.sql
 ```
 
-出力される `database_id` を `wrangler.toml` の `database_id` に設定。
-
-### 3. スキーマ適用
+### 5. シークレットの設定
 
 ```bash
-# ローカル開発用
-npm run db:migrate:local
+# Google OAuth
+npx wrangler secret put GOOGLE_CLIENT_ID
+npx wrangler secret put GOOGLE_CLIENT_SECRET
 
-# リモート（本番）
-npm run db:migrate:remote
+# セッション署名用（ランダムな32文字以上の文字列）
+npx wrangler secret put JWT_SECRET
+
+# refresh_token 暗号化用（ランダムな32文字以上の文字列）
+npx wrangler secret put ENCRYPTION_KEY
+
+# Resend API キー
+npx wrangler secret put RESEND_API_KEY
 ```
 
-### 4. Google Calendar API 設定
+### 6. BASE_URL の設定
 
-1. [Google Cloud Console](https://console.cloud.google.com/) でプロジェクト作成
-2. **Google Calendar API** を有効化
-3. **サービスアカウント** を作成 → JSONキーをダウンロード
-4. Google カレンダーの設定で、サービスアカウントのメールアドレスに **カレンダーを共有**（「変更および共有の管理権限」）
+`wrangler.toml` の `[vars]` セクションで `BASE_URL` を設定:
 
-### 5. Resend メール設定
-
-1. [Resend](https://resend.com/) でアカウント作成
-2. APIキーを取得
-
-### 6. Secrets 設定
-
-```bash
-# Google サービスアカウントJSON (ファイルの中身をそのまま貼り付け)
-wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON
-
-# Resend APIキー
-wrangler secret put RESEND_API_KEY
-
-# 管理者パスワード
-wrangler secret put ADMIN_PASSWORD
+```toml
+[vars]
+BASE_URL = "https://あなたのドメイン"
 ```
 
 ### 7. デプロイ
 
 ```bash
-npm run deploy
+npx wrangler deploy
 ```
 
-## 開発
+## ローカル開発
 
 ```bash
-# ローカル開発サーバー (Secrets は .dev.vars ファイルに設定)
-npm run dev
+# .dev.vars.example をコピーして .dev.vars を作成
+cp .dev.vars.example .dev.vars
+
+# .dev.vars に実際の値を入力
+
+# ローカルサーバーの起動
+npx wrangler dev
 ```
 
-`.dev.vars` ファイル（ローカル開発用）:
-```
-GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-RESEND_API_KEY=re_xxxxxxxx
-ADMIN_PASSWORD=your-password
-```
+## ファイル構成
 
-## API エンドポイント
-
-| Method | Path | 説明 |
-|--------|------|------|
-| GET | `/api/settings` | 公開設定取得 |
-| GET | `/api/events?year=&month=` | 月のイベント取得 |
-| GET | `/api/slots?date=YYYY-MM-DD` | 日の空きスロット |
-| POST | `/api/bookings` | 予約作成 |
-| POST | `/api/admin/login` | 管理者ログイン |
-| GET | `/api/admin/settings` | 管理設定取得 |
-| PUT | `/api/admin/settings` | 管理設定更新 |
-| GET | `/api/admin/bookings` | 予約一覧 |
+```
+src/
+  index.ts              -- エントリーポイント / ルーター
+  types.ts              -- TypeScript 型定義
+  routes/
+    auth.ts             -- Google OAuth フロー
+    settings.ts         -- 設定 API
+    events.ts           -- カレンダーイベント API
+    slots.ts            -- 空き時間スロット API
+    bookings.ts         -- 予約 API
+  services/
+    calendar.ts         -- Google Calendar API
+    crypto.ts           -- refresh_token 暗号化
+    db.ts               -- D1 データベース操作
+    email.ts            -- Resend メール送信
+    oauth.ts            -- Google OAuth ヘルパー
+    session.ts          -- JWT セッション管理
+  utils/
+    timezone.ts         -- タイムゾーンユーティリティ
+public/
+  index.html            -- ランディングページ
+  booking.html          -- 公開予約ページ
+  dashboard.html        -- ダッシュボード
+migrations/
+  0001_init.sql         -- 初期スキーマ
+  0002_saas.sql         -- SaaS マイグレーション
+```
 
 ## コスト
 
-全て無料枠内: $0/月
+- Cloudflare Workers + D1: **$0**（無料枠内）
+- Google OAuth: **$0**
+- Resend: **$0**（100通/日まで無料）
+- 独自ドメイン: ~$10/年
+
+---
+
+BookMe by Shinno

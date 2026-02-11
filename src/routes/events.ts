@@ -1,15 +1,19 @@
 /**
- * Events Route
- * GET /api/events?year=2026&month=1
- *
- * Returns calendar events for a given month (titles hidden).
+ * Events Route (Multi-tenant)
+ * GET /api/u/:slug/events?year=2026&month=1
  */
 import { Env } from '../types';
-import { getSettings } from '../services/db';
+import { getUserBySlug, getSettings } from '../services/db';
 import { getCalendarEvents } from '../services/calendar';
+import { refreshAccessToken } from '../services/oauth';
+import { decrypt } from '../services/crypto';
 import { jsonResponse } from '../index';
 
-export async function handleEventsRoute(request: Request, env: Env): Promise<Response> {
+export async function handleEventsRoute(
+  request: Request,
+  slug: string,
+  env: Env
+): Promise<Response> {
   const url = new URL(request.url);
   const year = parseInt(url.searchParams.get('year') || '', 10);
   const month = parseInt(url.searchParams.get('month') || '', 10);
@@ -18,24 +22,30 @@ export async function handleEventsRoute(request: Request, env: Env): Promise<Res
     return jsonResponse({ error: 'year and month are required' }, 400);
   }
 
-  const settings = await getSettings(env.DB);
+  const user = await getUserBySlug(env.DB, slug);
+  if (!user) {
+    return jsonResponse({ error: 'ユーザーが見つかりません' }, 404);
+  }
+
+  const settings = await getSettings(env.DB, user.id);
 
   if (!settings.calendarId) {
     return jsonResponse({ error: 'カレンダーが設定されていません' }, 400);
   }
 
-  // Build time range for the month
-  // month is 0-based (same as GAS getMonthEvents)
+  // Get access token from user's refresh token
+  const refreshToken = await decrypt(user.refresh_token, env.ENCRYPTION_KEY);
+  const accessToken = await refreshAccessToken(refreshToken, env);
+
   const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0));
   const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59));
 
   const events = await getCalendarEvents(
-    env.GOOGLE_SERVICE_ACCOUNT_JSON,
+    accessToken,
     settings.calendarId,
     startDate.toISOString(),
     endDate.toISOString()
   );
 
-  // Return events without titles (just start/end/isAllDay)
   return jsonResponse(events);
 }

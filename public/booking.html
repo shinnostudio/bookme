@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookMe</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #F0F4F8;
+      color: #1E293B;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --primary-light: #EEF2FF;
+      --surface: #FFFFFF;
+      --bg: #F0F4F8;
+      --text: #1E293B;
+      --text-secondary: #64748B;
+      --text-muted: #94A3B8;
+      --border: #E2E8F0;
+      --radius: 16px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
+      --success: #059669;
+      --success-light: #ECFDF5;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+    }
+    .container { max-width: 540px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; padding: 30px 0 10px; }
+    .header-icon {
+      width: 56px; height: 56px; background: var(--primary); border-radius: 16px;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 16px; box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    }
+    .header-icon svg { width: 28px; height: 28px; fill: white; }
+    .header h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+    .header .subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+    .tz-banner {
+      background: var(--primary-light); border-radius: var(--radius-sm);
+      padding: 10px 16px; margin: 16px 0; text-align: center;
+      font-size: 0.8rem; color: var(--primary);
+    }
+    .cal-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .cal-nav button {
+      width: 36px; height: 36px; border: 1.5px solid var(--border); background: var(--surface);
+      border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .cal-nav button:hover { border-color: var(--primary); background: var(--primary-light); }
+    .cal-nav button svg { width: 18px; height: 18px; fill: var(--text-secondary); }
+    .cal-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cal-title { font-size: 1rem; font-weight: 700; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .cal-dow { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); padding: 4px 0; text-transform: uppercase; }
+    .cal-day {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer;
+      transition: all 0.15s; border: 2px solid transparent; font-weight: 500;
+    }
+    .cal-day:hover { background: var(--primary-light); }
+    .cal-day.today { border-color: var(--primary); font-weight: 700; }
+    .cal-day.selected { background: var(--primary); color: white; }
+    .cal-day.disabled { color: var(--text-muted); opacity: 0.4; cursor: not-allowed; }
+    .cal-day.disabled:hover { background: transparent; }
+    .cal-day.empty { cursor: default; }
+    .cal-day.empty:hover { background: transparent; }
+    .slots-section { margin-bottom: 20px; }
+    .slots-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; padding: 0 4px; }
+    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+    .slot {
+      padding: 12px 8px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      text-align: center; cursor: pointer; transition: all 0.15s; background: var(--surface);
+    }
+    .slot:hover { border-color: var(--primary); background: var(--primary-light); }
+    .slot.selected { border-color: var(--primary); background: var(--primary); color: white; }
+    .slot.unavailable { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+    .slot.unavailable:hover { border-color: var(--border); background: var(--surface); }
+    .slot-time { font-size: 0.85rem; font-weight: 600; }
+    .slot-time-local { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .slot.selected .slot-time-local { color: rgba(255,255,255,0.7); }
+    .slot-empty { text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.9rem; }
+    .booking-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
+    .booking-card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .booking-info { font-size: 0.85rem; color: var(--primary); margin-bottom: 16px; padding: 10px 14px; background: var(--primary-light); border-radius: var(--radius-sm); }
+    .booking-info-local { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.95rem; font-family: inherit; outline: none; transition: all 0.15s; }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+    textarea.form-input { min-height: 80px; resize: vertical; }
+    .submit-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .submit-btn:hover { background: var(--primary-hover); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .result-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 40px 24px; margin-bottom: 20px; text-align: center; }
+    .result-icon { font-size: 48px; margin-bottom: 16px; }
+    .result-card h2 { font-size: 1.2rem; margin-bottom: 8px; }
+    .result-card p { color: var(--text-secondary); font-size: 0.9rem; }
+    .error-card { background: var(--danger-light); border-radius: var(--radius); padding: 40px 24px; margin-bottom: 20px; text-align: center; }
+    .error-card p { color: var(--danger); }
+    .footer { text-align: center; padding: 20px; font-size: 0.75rem; color: var(--text-muted); }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 12px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-state { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 0.9rem; }
+    @media (max-width: 600px) {
+      .container { padding: 12px; }
+      .cal-card, .booking-card { padding: 16px; }
+      .slots-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="loadingState">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p id="loadingText"></p>
+    </div>
+  </div>
+
+  <div class="container" id="errorState" style="display:none;">
+    <div class="error-card">
+      <p id="errorMessage"></p>
+    </div>
+    <div class="footer"><a href="/" style="color:var(--primary);text-decoration:none;" id="errorBackLink"></a></div>
+  </div>
+
+  <div class="container" id="mainContent" style="display:none;">
+    <div class="header">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/></svg>
+      </div>
+      <h1 id="ownerName"></h1>
+      <div class="subtitle" id="durationText"></div>
+    </div>
+
+    <div class="tz-banner" id="tzBanner" style="display:none;"></div>
+
+    <div class="cal-card" id="calendarSection">
+      <div class="cal-nav">
+        <button id="prevMonth" onclick="changeMonth(-1)">
+          <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <span class="cal-title" id="calTitle"></span>
+        <button id="nextMonth" onclick="changeMonth(1)">
+          <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="slots-section" id="slotsSection" style="display:none;">
+      <div class="slots-title" id="slotsTitle"></div>
+      <div id="slotsContainer"></div>
+    </div>
+
+    <div class="booking-card" id="bookingForm" style="display:none;">
+      <h2 id="formTitle"></h2>
+      <div class="booking-info" id="bookingInfo"></div>
+      <form onsubmit="submitBooking(event)">
+        <div class="form-group">
+          <label id="labelName"></label>
+          <input type="text" class="form-input" id="bookName" required>
+        </div>
+        <div class="form-group">
+          <label id="labelEmail"></label>
+          <input type="email" class="form-input" id="bookEmail" required placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label id="labelMessage"></label>
+          <textarea class="form-input" id="bookMessage"></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn"></button>
+      </form>
+    </div>
+
+    <div class="result-card" id="resultSection" style="display:none;">
+      <div class="result-icon">&#x2705;</div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultMessage"></p>
+    </div>
+
+    <div class="footer">BookMe by Shinno</div>
+  </div>
+
+  <script>
+    /* ===== i18n ===== */
+    var i18n = {
+      ja: {
+        loading: '読み込み中...',
+        pageNotFound: 'ページが見つかりません。',
+        pageNotAvailable: 'このページは存在しないか、設定が完了していません。',
+        backToTop: 'BookMe トップへ戻る',
+        scheduleTitle: '{name} のスケジュールを予約',
+        durationMin: '{n}分の予約',
+        tzBanner: '{owner} のタイムゾーン: {ownerTz}  |  あなたのタイムゾーン: {yourTz}',
+        months: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+        calTitle: '{year}年 {month}',
+        dows: ['日','月','火','水','木','金','土'],
+        slotsTitle: '{month}月{day}日（{dow}）の空き時間',
+        slotsLoading: '読み込み中...',
+        slotsFailed: 'スロットの読み込みに失敗しました。',
+        slotsEmpty: 'この日は空いている時間帯がありません。',
+        ownerTz: 'オーナーのTime Zone: ',
+        formTitle: '予約情報の入力',
+        labelName: 'お名前 *',
+        labelEmail: 'メールアドレス *',
+        labelMessage: 'メッセージ（任意）',
+        placeholderName: '山田 太郎',
+        placeholderMessage: 'ご連絡事項があれば入力してください',
+        submitBtn: '予約を確定する',
+        submitting: '予約処理中...',
+        resultTitle: '予約が完了しました',
+        resultMessage: '予約が完了しました、メールをご確認ください。',
+        bookingFailed: '予約に失敗しました。',
+        genericError: 'エラーが発生しました。もう一度お試しください。',
+        ownerTzLabel: 'オーナーのTime Zone: ',
+        pageTitle: '{name} - 予約 | BookMe'
+      },
+      en: {
+        loading: 'Loading...',
+        pageNotFound: 'Page not found.',
+        pageNotAvailable: 'This page does not exist or has not been set up yet.',
+        backToTop: 'Back to BookMe',
+        scheduleTitle: 'Book a time with {name}',
+        durationMin: '{n} min appointment',
+        tzBanner: "{owner}'s timezone: {ownerTz}  |  Your timezone: {yourTz}",
+        months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+        calTitle: '{month} {year}',
+        dows: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+        slotsTitle: 'Available times for {month} {day} ({dow})',
+        slotsLoading: 'Loading...',
+        slotsFailed: 'Failed to load time slots.',
+        slotsEmpty: 'No available time slots for this day.',
+        ownerTz: "Owner's Time Zone: ",
+        formTitle: 'Enter your details',
+        labelName: 'Name *',
+        labelEmail: 'Email *',
+        labelMessage: 'Message (optional)',
+        placeholderName: 'John Doe',
+        placeholderMessage: 'Any additional notes',
+        submitBtn: 'Confirm Booking',
+        submitting: 'Processing...',
+        resultTitle: 'Booking Confirmed!',
+        resultMessage: 'Your booking is confirmed. Please check your email.',
+        bookingFailed: 'Booking failed.',
+        genericError: 'An error occurred. Please try again.',
+        ownerTzLabel: "Owner's Time Zone: ",
+        pageTitle: '{name} - Book | BookMe'
+      }
+    };
+
+    var lang = (navigator.language || 'ja').startsWith('ja') ? 'ja' : 'en';
+    var L = i18n[lang];
+
+    function t(key, params) {
+      var str = L[key] || i18n.ja[key] || key;
+      if (params) {
+        for (var k in params) {
+          str = str.replace('{' + k + '}', params[k]);
+        }
+      }
+      return str;
+    }
+
+    /* ===== State ===== */
+    var state = {
+      slug: '',
+      settings: null,
+      currentYear: 0,
+      currentMonth: 0,
+      selectedDate: null,
+      selectedSlot: null,
+      events: {},
+      visitorTz: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+
+    /* ===== Init static labels ===== */
+    document.getElementById('loadingText').textContent = t('loading');
+    document.getElementById('errorBackLink').textContent = t('backToTop');
+    document.documentElement.lang = lang;
+
+    /* ===== Slug extraction ===== */
+    function getSlug() {
+      var params = new URLSearchParams(window.location.search);
+      var s = params.get('s');
+      if (s) return s;
+      var path = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
+      if (path && path !== 'booking.html') return path;
+      return '';
+    }
+
+    /* ===== API ===== */
+    async function api(path) {
+      var res = await fetch(path);
+      if (!res.ok) {
+        var err = await res.json().catch(function() { return {}; });
+        throw new Error(err.error || 'Request failed');
+      }
+      return res.json();
+    }
+
+    /* ===== Initialize ===== */
+    async function init() {
+      state.slug = getSlug();
+
+      if (!state.slug) {
+        showError(t('pageNotFound'));
+        return;
+      }
+
+      try {
+        state.settings = await api('/api/u/' + state.slug + '/settings');
+        var name = state.settings.ownerName;
+
+        document.title = t('pageTitle', { name: name });
+        document.getElementById('ownerName').textContent = t('scheduleTitle', { name: name });
+        document.getElementById('durationText').textContent = t('durationMin', { n: state.settings.duration });
+
+        // Form labels
+        document.getElementById('formTitle').textContent = t('formTitle');
+        document.getElementById('labelName').textContent = t('labelName');
+        document.getElementById('labelEmail').textContent = t('labelEmail');
+        document.getElementById('labelMessage').textContent = t('labelMessage');
+        document.getElementById('bookName').placeholder = t('placeholderName');
+        document.getElementById('bookMessage').placeholder = t('placeholderMessage');
+        document.getElementById('submitBtn').textContent = t('submitBtn');
+
+        // Timezone banner
+        var ownerTz = state.settings.timezone || 'Asia/Tokyo';
+        if (state.visitorTz !== ownerTz) {
+          var banner = document.getElementById('tzBanner');
+          banner.textContent = t('tzBanner', { owner: name, ownerTz: ownerTz, yourTz: state.visitorTz });
+          banner.style.display = 'block';
+        }
+
+        var now = new Date();
+        state.currentYear = now.getFullYear();
+        state.currentMonth = now.getMonth();
+
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+
+        await loadMonth();
+
+        // Auto-select today
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + (state.settings.maxDays || 30));
+        var availDays = state.settings.availableDays || [1,2,3,4,5];
+        if (today <= maxDate && availDays.indexOf(today.getDay()) !== -1) {
+          await selectDate(formatDate(today));
+        }
+      } catch (err) {
+        showError(t('pageNotAvailable'));
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorMessage').textContent = msg;
+      document.getElementById('errorState').style.display = 'block';
+    }
+
+    /* ===== Calendar ===== */
+    async function loadMonth() {
+      var key = state.currentYear + '-' + state.currentMonth;
+      if (!state.events[key]) {
+        try {
+          state.events[key] = await api(
+            '/api/u/' + state.slug + '/events?year=' + state.currentYear + '&month=' + state.currentMonth
+          );
+        } catch (e) {
+          state.events[key] = [];
+        }
+      }
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      var monthName = t('months')[state.currentMonth];
+      if (lang === 'ja') {
+        document.getElementById('calTitle').textContent = t('calTitle', { year: state.currentYear, month: monthName });
+      } else {
+        document.getElementById('calTitle').textContent = t('calTitle', { year: state.currentYear, month: monthName });
+      }
+
+      var dows = t('dows');
+      var grid = document.getElementById('calGrid');
+      grid.innerHTML = '';
+
+      dows.forEach(function(d) {
+        var el = document.createElement('div');
+        el.className = 'cal-dow';
+        el.textContent = d;
+        grid.appendChild(el);
+      });
+
+      var firstDay = new Date(state.currentYear, state.currentMonth, 1).getDay();
+      var daysInMonth = new Date(state.currentYear, state.currentMonth + 1, 0).getDate();
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      var maxDate = new Date();
+      maxDate.setDate(maxDate.getDate() + (state.settings.maxDays || 30));
+      var availDays = state.settings.availableDays || [1,2,3,4,5];
+
+      for (var i = 0; i < firstDay; i++) {
+        var empty = document.createElement('div');
+        empty.className = 'cal-day empty';
+        grid.appendChild(empty);
+      }
+
+      for (var d = 1; d <= daysInMonth; d++) {
+        var el = document.createElement('div');
+        el.className = 'cal-day';
+        el.textContent = d;
+
+        var cellDate = new Date(state.currentYear, state.currentMonth, d);
+        var isPast = cellDate < today;
+        var isTooFar = cellDate > maxDate;
+        var dayOfWeek = cellDate.getDay();
+        var isAvailable = availDays.indexOf(dayOfWeek) !== -1;
+
+        if (isPast || isTooFar || !isAvailable) {
+          el.classList.add('disabled');
+        } else {
+          el.setAttribute('data-date', formatDate(cellDate));
+          el.onclick = (function(dateStr) {
+            return function() { selectDate(dateStr); };
+          })(formatDate(cellDate));
+        }
+
+        if (cellDate.getTime() === today.getTime()) el.classList.add('today');
+        if (state.selectedDate === formatDate(cellDate)) el.classList.add('selected');
+
+        grid.appendChild(el);
+      }
+
+      var todayMonth = today.getMonth();
+      var todayYear = today.getFullYear();
+      document.getElementById('prevMonth').disabled =
+        state.currentYear === todayYear && state.currentMonth <= todayMonth;
+    }
+
+    function changeMonth(delta) {
+      state.currentMonth += delta;
+      if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
+      if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
+      loadMonth();
+    }
+
+    function formatDate(date) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    /* ===== Date Selection ===== */
+    async function selectDate(dateStr) {
+      state.selectedDate = dateStr;
+      state.selectedSlot = null;
+      renderCalendar();
+
+      document.getElementById('slotsSection').style.display = 'block';
+      document.getElementById('bookingForm').style.display = 'none';
+
+      var d = new Date(dateStr + 'T00:00:00');
+      var dows = t('dows');
+      if (lang === 'ja') {
+        document.getElementById('slotsTitle').textContent =
+          t('slotsTitle', { month: d.getMonth() + 1, day: d.getDate(), dow: dows[d.getDay()] });
+      } else {
+        var monthName = t('months')[d.getMonth()];
+        document.getElementById('slotsTitle').textContent =
+          t('slotsTitle', { month: monthName, day: d.getDate(), dow: dows[d.getDay()] });
+      }
+
+      document.getElementById('slotsContainer').innerHTML =
+        '<div style="text-align:center;padding:20px;"><div class="spinner"></div></div>';
+
+      try {
+        var slots = await api('/api/u/' + state.slug + '/slots?date=' + dateStr);
+        renderSlots(slots);
+      } catch (e) {
+        document.getElementById('slotsContainer').innerHTML =
+          '<div class="slot-empty">' + t('slotsFailed') + '</div>';
+      }
+    }
+
+    function renderSlots(slots) {
+      var container = document.getElementById('slotsContainer');
+      if (!slots || slots.length === 0) {
+        container.innerHTML = '<div class="slot-empty">' + t('slotsEmpty') + '</div>';
+        return;
+      }
+
+      var ownerTz = state.settings.timezone || 'Asia/Tokyo';
+      var showLocal = state.visitorTz !== ownerTz;
+
+      var grid = document.createElement('div');
+      grid.className = 'slots-grid';
+
+      slots.forEach(function(slot) {
+        var el = document.createElement('div');
+        el.className = 'slot';
+        if (!slot.available) el.classList.add('unavailable');
+
+        var sH = String(slot.startHour).padStart(2, '0');
+        var sM = String(slot.startMinute).padStart(2, '0');
+        var eH = String(slot.endHour).padStart(2, '0');
+        var eM = String(slot.endMinute).padStart(2, '0');
+
+        var html;
+        if (showLocal) {
+          var localStart = new Date(slot.start).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: state.visitorTz });
+          var localEnd = new Date(slot.end).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: state.visitorTz });
+          html = '<div class="slot-time">' + localStart + ' - ' + localEnd + '</div>';
+          html += '<div class="slot-time-local">' + t('ownerTzLabel') + sH + ':' + sM + ' - ' + eH + ':' + eM + '</div>';
+        } else {
+          html = '<div class="slot-time">' + sH + ':' + sM + ' - ' + eH + ':' + eM + '</div>';
+        }
+
+        el.innerHTML = html;
+
+        if (slot.available) {
+          el.onclick = (function(s) {
+            return function() { selectSlot(s); };
+          })(slot);
+        }
+
+        grid.appendChild(el);
+      });
+
+      container.innerHTML = '';
+      container.appendChild(grid);
+    }
+
+    /* ===== Slot Selection ===== */
+    function selectSlot(slot) {
+      state.selectedSlot = slot;
+
+      document.querySelectorAll('.slot').forEach(function(el) { el.classList.remove('selected'); });
+      event.currentTarget.classList.add('selected');
+
+      var ownerTz = state.settings.timezone || 'Asia/Tokyo';
+      var showLocal = state.visitorTz !== ownerTz;
+      var sH = String(slot.startHour).padStart(2, '0');
+      var sM = String(slot.startMinute).padStart(2, '0');
+      var eH = String(slot.endHour).padStart(2, '0');
+      var eM = String(slot.endMinute).padStart(2, '0');
+
+      var info;
+      if (showLocal) {
+        var localStart = new Date(slot.start).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: state.visitorTz });
+        var localEnd = new Date(slot.end).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: state.visitorTz });
+        info = state.selectedDate + ' ' + localStart + ' - ' + localEnd + ' (' + state.visitorTz + ')';
+        info += '<div class="booking-info-local">' + t('ownerTzLabel') + sH + ':' + sM + ' - ' + eH + ':' + eM + ' (' + ownerTz + ')</div>';
+      } else {
+        info = state.selectedDate + ' ' + sH + ':' + sM + ' - ' + eH + ':' + eM + ' (' + ownerTz + ')';
+      }
+
+      document.getElementById('bookingInfo').innerHTML = info;
+      document.getElementById('bookingForm').style.display = 'block';
+      document.getElementById('bookingForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    /* ===== Submit Booking ===== */
+    async function submitBooking(e) {
+      e.preventDefault();
+      if (!state.selectedSlot) return;
+
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = t('submitting');
+
+      try {
+        var res = await fetch('/api/u/' + state.slug + '/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            startTime: state.selectedSlot.start,
+            endTime: state.selectedSlot.end,
+            name: document.getElementById('bookName').value.trim(),
+            email: document.getElementById('bookEmail').value.trim(),
+            message: document.getElementById('bookMessage').value.trim()
+          })
+        });
+
+        var result = await res.json();
+
+        if (result.success) {
+          document.getElementById('calendarSection').style.display = 'none';
+          document.getElementById('slotsSection').style.display = 'none';
+          document.getElementById('bookingForm').style.display = 'none';
+          document.getElementById('resultSection').style.display = 'block';
+          document.getElementById('resultTitle').textContent = t('resultTitle');
+          document.getElementById('resultMessage').textContent = t('resultMessage');
+        } else {
+          btn.disabled = false;
+          btn.textContent = t('submitBtn');
+          alert(result.message || t('bookingFailed'));
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = t('submitBtn');
+        alert(t('genericError'));
+      }
+    }
+
+    /* ===== Init ===== */
+    init();
+  </script>
+</body>
+</html>

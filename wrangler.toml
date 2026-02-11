@@ -12,11 +12,13 @@ binding = "DB"
 database_name = "bookme-db"
 database_id = "362d7520-a159-43ba-8447-1b8562531632"
 
-# Environment variables (secrets は wrangler secret put で設定)
-# [vars]
-# GOOGLE_CALENDAR_ID = "your-calendar@gmail.com"
+# Non-secret environment variables
+[vars]
+BASE_URL = "https://bookme.shinno.workers.dev"
 
 # Secrets (wrangler secret put で設定):
-# - GOOGLE_SERVICE_ACCOUNT_JSON  (サービスアカウントJSONキー)
-# - RESEND_API_KEY               (Resend APIキー)
-# - ADMIN_PASSWORD               (管理者パスワード)
+# - GOOGLE_CLIENT_ID           (OAuth クライアント ID)
+# - GOOGLE_CLIENT_SECRET       (OAuth クライアントシークレット)
+# - JWT_SECRET                 (セッション署名用)
+# - ENCRYPTION_KEY             (refresh_token 暗号化用)
+# - RESEND_API_KEY             (Resend APIキー)

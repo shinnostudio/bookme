@@ -1,12 +1,27 @@
 /** Cloudflare Workers environment bindings */
 export interface Env {
   DB: D1Database;
-  GOOGLE_SERVICE_ACCOUNT_JSON: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  JWT_SECRET: string;
+  ENCRYPTION_KEY: string;
   RESEND_API_KEY: string;
-  ADMIN_PASSWORD: string;
+  BASE_URL: string;
 }
 
-/** Settings stored in D1 */
+/** User record from DB */
+export interface User {
+  id: number;
+  google_id: string;
+  email: string;
+  name: string;
+  slug: string;
+  avatar_url: string;
+  refresh_token: string;
+  created_at: string;
+}
+
+/** Settings stored in D1 (per user) */
 export interface Settings {
   ownerName: string;
   ownerEmail: string;
@@ -28,6 +43,7 @@ export interface PublicSettings {
   timezone: string;
   maxDays: number;
   availableDays: number[];
+  slug: string;
 }
 
 /** Calendar event from Google Calendar API */
@@ -62,6 +78,7 @@ export interface BookingRequest {
 /** Booking record from DB */
 export interface BookingRecord {
   id: number;
+  user_id: number;
   date: string;
   start_time: string;
   end_time: string;
@@ -74,28 +91,27 @@ export interface BookingRecord {
   created_at: string;
 }
 
-/** Google Service Account key JSON structure */
-export interface ServiceAccountKey {
-  type: string;
-  project_id: string;
-  private_key_id: string;
-  private_key: string;
-  client_email: string;
-  client_id: string;
-  auth_uri: string;
-  token_uri: string;
-}
-
-/** JWT header/payload for Google auth */
-export interface JWTHeader {
-  alg: string;
-  typ: string;
-}
-
-export interface JWTClaims {
-  iss: string;
-  scope: string;
-  aud: string;
+/** JWT Session payload */
+export interface SessionPayload {
+  userId: number;
+  email: string;
   exp: number;
-  iat: number;
+}
+
+/** Google OAuth token response */
+export interface GoogleTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+  token_type: string;
+  scope: string;
+  id_token?: string;
+}
+
+/** Google user profile from ID token */
+export interface GoogleUserInfo {
+  sub: string;
+  email: string;
+  name: string;
+  picture: string;
 }
