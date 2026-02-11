@@ -158,4 +158,4 @@ migrations/
 
 ---
 
-BookMe by Shinno
+BookMe by Shinno Studio

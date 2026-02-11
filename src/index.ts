@@ -116,7 +116,7 @@ export default {
       else if (path === '/dashboard' || path === '/dashboard/') {
         const session = await getSession(request, env);
         if (!session) {
-          return Response.redirect(`${env.BASE_URL}/`, 302);
+          return Response.redirect(`${env.BASE_URL}/auth/google`, 302);
         }
         return Response.redirect(`${env.BASE_URL}/dashboard.html`, 302);
       }
