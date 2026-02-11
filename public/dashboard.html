@@ -362,6 +362,7 @@
       <div class="tabs">
         <button class="tab active" id="tabSettings" onclick="switchTab('settings')">設定</button>
         <button class="tab" id="tabBookings" onclick="switchTab('bookings')">予約一覧</button>
+        <button class="tab" id="tabBilling" onclick="switchTab('billing')">プラン</button>
       </div>
 
       <!-- Settings Tab -->
@@ -520,6 +521,57 @@
           </div>
         </div>
       </div>
+
+      <!-- Billing Tab -->
+      <div id="billingView" style="display:none;">
+        <div class="card">
+          <h2>
+            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+            プラン・お支払い
+          </h2>
+
+          <div id="billingLoading" style="text-align:center; padding:40px; color:var(--text-muted);">読み込み中...</div>
+
+          <div id="billingContent" style="display:none;">
+            <!-- Current Plan -->
+            <div style="padding:24px; background:var(--primary-light); border-radius:var(--radius-sm); margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:4px;">現在のプラン</div>
+                <div style="font-size:1.5rem; font-weight:700; color:var(--primary);" id="billingPlanName">Free</div>
+              </div>
+              <div id="billingBadge" style="display:none; padding:6px 16px; background:var(--primary); color:white; border-radius:20px; font-size:0.85rem; font-weight:600;">Pro</div>
+            </div>
+
+            <!-- Usage (Free) -->
+            <div id="billingUsage" style="margin-bottom:20px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:6px;">
+                <span style="color:var(--text-secondary);">今月の予約件数</span>
+                <span id="billingUsageText" style="font-weight:600;">0 / 10</span>
+              </div>
+              <div style="height:8px; background:var(--border); border-radius:4px; overflow:hidden;">
+                <div id="billingUsageBar" style="height:100%; background:var(--primary); border-radius:4px; transition:width 0.3s; width:0%;"></div>
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">上限に達すると、予約ページで新規予約が停止されます</div>
+            </div>
+
+            <!-- Upgrade Button (Free) -->
+            <div id="billingUpgrade" style="text-align:center; padding:20px 0;">
+              <p style="color:var(--text-secondary); margin-bottom:12px; font-size:0.9rem;">Pro プランにアップグレードすると、予約件数が無制限になります。</p>
+              <button onclick="handleUpgrade()" style="padding:12px 32px; background:var(--primary); color:white; border:none; border-radius:var(--radius-sm); font-size:1rem; font-weight:600; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
+                Pro にアップグレード（¥100/月）
+              </button>
+            </div>
+
+            <!-- Portal Button (Pro) -->
+            <div id="billingPortal" style="display:none; text-align:center; padding:20px 0;">
+              <p style="color:var(--text-secondary); margin-bottom:12px; font-size:0.9rem;">お支払い情報の変更や解約は、Stripe の管理画面から行えます。</p>
+              <button onclick="handlePortal()" style="padding:12px 32px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:0.95rem; font-weight:600; cursor:pointer; transition:all 0.15s;" onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">
+                お支払い管理
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -564,6 +616,17 @@
 
         currentSlug = settings.slug;
         showDashboard(settings);
+
+        // Handle billing redirect
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('billing') === 'success') {
+          switchTab('billing');
+          // Clean URL
+          window.history.replaceState({}, '', '/dashboard.html');
+        } else if (params.get('billing') === 'cancel') {
+          switchTab('billing');
+          window.history.replaceState({}, '', '/dashboard.html');
+        }
       } catch (err) {
         // Not authenticated
         window.location.href = '/';
@@ -606,9 +669,83 @@
     function switchTab(tab) {
       document.getElementById('tabSettings').classList.toggle('active', tab === 'settings');
       document.getElementById('tabBookings').classList.toggle('active', tab === 'bookings');
+      document.getElementById('tabBilling').classList.toggle('active', tab === 'billing');
       document.getElementById('settingsView').style.display = tab === 'settings' ? 'block' : 'none';
       document.getElementById('bookingsView').style.display = tab === 'bookings' ? 'block' : 'none';
+      document.getElementById('billingView').style.display = tab === 'billing' ? 'block' : 'none';
       if (tab === 'bookings') loadBookings();
+      if (tab === 'billing') loadBilling();
+    }
+
+    /* ===== Billing ===== */
+    var billingLoaded = false;
+
+    async function loadBilling() {
+      if (billingLoaded) return;
+      try {
+        var data = await api('/api/dashboard/billing');
+        if (!data) return;
+        billingLoaded = true;
+
+        document.getElementById('billingLoading').style.display = 'none';
+        document.getElementById('billingContent').style.display = 'block';
+
+        var isPro = data.plan === 'pro';
+        document.getElementById('billingPlanName').textContent = isPro ? 'Pro' : 'Free';
+        document.getElementById('billingBadge').style.display = isPro ? 'inline-block' : 'none';
+
+        // Usage
+        if (isPro) {
+          document.getElementById('billingUsage').style.display = 'none';
+          document.getElementById('billingUpgrade').style.display = 'none';
+          document.getElementById('billingPortal').style.display = 'block';
+        } else {
+          var count = data.monthlyBookings || 0;
+          var limit = data.monthlyLimit || 10;
+          var pct = Math.min(100, Math.round((count / limit) * 100));
+          document.getElementById('billingUsageText').textContent = count + ' / ' + limit;
+          document.getElementById('billingUsageBar').style.width = pct + '%';
+          if (pct >= 100) {
+            document.getElementById('billingUsageBar').style.background = 'var(--danger)';
+          } else if (pct >= 80) {
+            document.getElementById('billingUsageBar').style.background = '#F59E0B';
+          }
+          document.getElementById('billingUsage').style.display = 'block';
+          document.getElementById('billingUpgrade').style.display = 'block';
+          document.getElementById('billingPortal').style.display = data.hasStripeCustomer ? 'block' : 'none';
+        }
+      } catch (err) {
+        console.error('Failed to load billing:', err);
+        document.getElementById('billingLoading').innerHTML = '<span style="color:var(--danger);">読み込みに失敗しました</span>';
+      }
+    }
+
+    async function handleUpgrade() {
+      try {
+        var data = await api('/api/dashboard/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (data && data.url) {
+          window.location.href = data.url;
+        }
+      } catch (err) {
+        alert('エラーが発生しました: ' + err.message);
+      }
+    }
+
+    async function handlePortal() {
+      try {
+        var data = await api('/api/dashboard/portal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (data && data.url) {
+          window.location.href = data.url;
+        }
+      } catch (err) {
+        alert('エラーが発生しました: ' + err.message);
+      }
     }
 
     /* ===== Save Settings ===== */

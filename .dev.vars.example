@@ -11,5 +11,10 @@ ENCRYPTION_KEY=your-encryption-key-change-me-to-random-string
 # Resend API key for emails
 RESEND_API_KEY=re_xxxxxxxxxxxxx
 
+# Stripe
+STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
+STRIPE_PRICE_ID=price_xxxxxxxxxxxxx
+
 # Base URL (for local development)
 BASE_URL=http://localhost:8787

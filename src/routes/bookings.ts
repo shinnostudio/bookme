@@ -4,7 +4,7 @@
  * GET  /api/dashboard/bookings      - List bookings (auth required)
  */
 import { Env, BookingRequest } from '../types';
-import { getUserBySlug, getSettings, insertBooking, getBookings } from '../services/db';
+import { getUserBySlug, getSettings, insertBooking, getBookings, getMonthlyBookingCount } from '../services/db';
 import { getCalendarEvents, createCalendarEvent } from '../services/calendar';
 import { refreshAccessToken } from '../services/oauth';
 import { decrypt } from '../services/crypto';
@@ -29,6 +29,19 @@ export const handleBookingsRoutes = {
     const settings = await getSettings(env.DB, user.id);
     if (!settings.calendarId) {
       return jsonResponse({ success: false, message: 'カレンダーが設定されていません。' }, 400);
+    }
+
+    // Free plan booking limit check
+    const FREE_MONTHLY_LIMIT = 10;
+    if (!user.plan || user.plan === 'free') {
+      const monthlyCount = await getMonthlyBookingCount(env.DB, user.id);
+      if (monthlyCount >= FREE_MONTHLY_LIMIT) {
+        return jsonResponse({
+          success: false,
+          message: '今月の予約受付上限に達しました。',
+          limitReached: true,
+        }, 429);
+      }
     }
 
     const start = new Date(body.startTime);

@@ -221,3 +221,48 @@ export async function getBookings(db: D1Database, userId: number): Promise<Booki
 
   return result.results;
 }
+
+// ==================== Billing ====================
+
+/** Update user plan and Stripe IDs */
+export async function updateUserPlan(
+  db: D1Database,
+  userId: number,
+  plan: string,
+  stripeCustomerId?: string,
+  stripeSubscriptionId?: string
+): Promise<void> {
+  const sets = ['plan = ?'];
+  const values: (string | number)[] = [plan];
+
+  if (stripeCustomerId !== undefined) {
+    sets.push('stripe_customer_id = ?');
+    values.push(stripeCustomerId);
+  }
+  if (stripeSubscriptionId !== undefined) {
+    sets.push('stripe_subscription_id = ?');
+    values.push(stripeSubscriptionId);
+  }
+
+  values.push(userId);
+
+  await db
+    .prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`)
+    .bind(...values)
+    .run();
+}
+
+/** Get the count of bookings for a user in the current month */
+export async function getMonthlyBookingCount(db: D1Database, userId: number): Promise<number> {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const monthPrefix = `${year}-${month}`;
+
+  const result = await db
+    .prepare('SELECT COUNT(*) as count FROM bookings WHERE user_id = ? AND created_at LIKE ?')
+    .bind(userId, `${monthPrefix}%`)
+    .first<{ count: number }>();
+
+  return result?.count || 0;
+}

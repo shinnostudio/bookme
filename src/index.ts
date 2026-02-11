@@ -22,6 +22,7 @@ import { handleSettingsRoutes } from './routes/settings';
 import { handleEventsRoute } from './routes/events';
 import { handleSlotsRoute } from './routes/slots';
 import { handleBookingsRoutes } from './routes/bookings';
+import { handleBillingRoutes } from './routes/billing';
 import { getSessionFromRequest, verifySessionToken } from './services/session';
 import { getUserById, getUserBySlug } from './services/db';
 
@@ -53,11 +54,22 @@ export default {
         response = await handleAuthRoutes.logout(env);
       }
 
+      // ========== Stripe Webhook (no auth, signature verified) ==========
+      else if (path === '/api/webhooks/stripe' && method === 'POST') {
+        response = await handleBillingRoutes.webhook(request, env);
+      }
+
       // ========== Dashboard API (auth required) ==========
       else if (path.startsWith('/api/dashboard/')) {
         const session = await getSession(request, env);
         if (!session) {
           response = jsonResponse({ error: 'Unauthorized' }, 401);
+        } else if (path === '/api/dashboard/checkout' && method === 'POST') {
+          response = await handleBillingRoutes.checkout(session.userId, env);
+        } else if (path === '/api/dashboard/billing' && method === 'GET') {
+          response = await handleBillingRoutes.getBilling(session.userId, env);
+        } else if (path === '/api/dashboard/portal' && method === 'POST') {
+          response = await handleBillingRoutes.portal(session.userId, env);
         } else if (path === '/api/dashboard/settings' && method === 'GET') {
           response = await handleSettingsRoutes.getDashboard(session.userId, env);
         } else if (path === '/api/dashboard/settings' && method === 'PUT') {
@@ -75,6 +87,7 @@ export default {
               name: user.name,
               slug: user.slug,
               avatarUrl: user.avatar_url,
+              plan: user.plan || 'free',
             });
           }
         }

@@ -5,8 +5,10 @@
  * PUT  /api/dashboard/settings      - Update current user's settings (auth required)
  */
 import { Env, PublicSettings, User } from '../types';
-import { getSettings, saveSettings, getUserBySlug, getUserById, updateUser, isSlugAvailable } from '../services/db';
+import { getSettings, saveSettings, getUserBySlug, getUserById, updateUser, isSlugAvailable, getMonthlyBookingCount } from '../services/db';
 import { jsonResponse } from '../index';
+
+const FREE_MONTHLY_LIMIT = 10;
 
 export const handleSettingsRoutes = {
   /** GET /api/u/:slug/settings - Public settings (no auth) */
@@ -18,7 +20,16 @@ export const handleSettingsRoutes = {
 
     const settings = await getSettings(env.DB, user.id);
 
-    const publicSettings: PublicSettings = {
+    // Check if user can still accept bookings
+    let acceptingBookings = true;
+    if (!user.plan || user.plan === 'free') {
+      const monthlyCount = await getMonthlyBookingCount(env.DB, user.id);
+      if (monthlyCount >= FREE_MONTHLY_LIMIT) {
+        acceptingBookings = false;
+      }
+    }
+
+    const publicSettings = {
       ownerName: settings.ownerName,
       duration: settings.duration,
       startHour: settings.startHour,
@@ -27,6 +38,7 @@ export const handleSettingsRoutes = {
       maxDays: settings.maxDays,
       availableDays: settings.availableDays,
       slug: user.slug,
+      acceptingBookings,
     };
 
     return jsonResponse(publicSettings);

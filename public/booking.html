@@ -223,7 +223,9 @@
         bookingFailed: '予約に失敗しました。',
         genericError: 'エラーが発生しました。もう一度お試しください。',
         ownerTzLabel: 'オーナーのTime Zone: ',
-        pageTitle: '{name} - 予約 | BookMe'
+        pageTitle: '{name} - 予約 | BookMe',
+        limitReached: '今月の予約受付は上限に達しました。来月以降に再度お試しください。',
+        limitReachedTitle: '予約受付停止中'
       },
       en: {
         loading: 'Loading...',
@@ -254,7 +256,9 @@
         bookingFailed: 'Booking failed.',
         genericError: 'An error occurred. Please try again.',
         ownerTzLabel: "Owner's Time Zone: ",
-        pageTitle: '{name} - Book | BookMe'
+        pageTitle: '{name} - Book | BookMe',
+        limitReached: 'Bookings for this month have reached the limit. Please try again next month.',
+        limitReachedTitle: 'Bookings Paused'
       }
     };
 
@@ -320,6 +324,13 @@
       try {
         state.settings = await api('/api/u/' + state.slug + '/settings');
         var name = state.settings.ownerName;
+
+        // Check if bookings are paused (free plan limit reached)
+        if (state.settings.acceptingBookings === false) {
+          document.title = t('limitReachedTitle') + ' | BookMe';
+          showError(t('limitReached'));
+          return;
+        }
 
         document.title = t('pageTitle', { name: name });
         document.getElementById('ownerName').textContent = t('scheduleTitle', { name: name });
@@ -609,7 +620,11 @@
         } else {
           btn.disabled = false;
           btn.textContent = t('submitBtn');
-          alert(result.message || t('bookingFailed'));
+          if (result.limitReached) {
+            alert(t('limitReached'));
+          } else {
+            alert(result.message || t('bookingFailed'));
+          }
         }
       } catch (err) {
         btn.disabled = false;

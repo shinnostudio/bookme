@@ -22,3 +22,6 @@ BASE_URL = "https://bookme.shinno.workers.dev"
 # - JWT_SECRET                 (セッション署名用)
 # - ENCRYPTION_KEY             (refresh_token 暗号化用)
 # - RESEND_API_KEY             (Resend APIキー)
+# - STRIPE_SECRET_KEY          (Stripe シークレットキー)
+# - STRIPE_WEBHOOK_SECRET      (Stripe Webhook 署名シークレット)
+# - STRIPE_PRICE_ID            (Stripe Pro プランの Price ID)

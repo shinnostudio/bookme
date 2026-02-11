@@ -6,6 +6,9 @@ export interface Env {
   JWT_SECRET: string;
   ENCRYPTION_KEY: string;
   RESEND_API_KEY: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
+  STRIPE_PRICE_ID: string;
   BASE_URL: string;
 }
 
@@ -18,6 +21,9 @@ export interface User {
   slug: string;
   avatar_url: string;
   refresh_token: string;
+  plan: string;
+  stripe_customer_id: string;
+  stripe_subscription_id: string;
   created_at: string;
 }
 
