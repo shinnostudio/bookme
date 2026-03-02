@@ -119,6 +119,72 @@
     }
     .copy-btn:hover { background: var(--primary-hover); }
 
+    /* ===== Guide Banner (Speech Bubble) ===== */
+    .guide-banner {
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      padding: 22px 28px 22px 22px;
+      margin-bottom: 32px;
+      position: relative;
+      box-shadow: 0 6px 20px rgba(79,70,229,0.10);
+      animation: guideSlideIn 0.35s ease-out;
+    }
+    .guide-banner::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 36px;
+      width: 18px;
+      height: 18px;
+      background: var(--surface);
+      border-right: 2px solid var(--primary);
+      border-bottom: 2px solid var(--primary);
+      transform: rotate(45deg);
+    }
+    @keyframes guideSlideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .guide-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--primary);
+    }
+    .guide-header-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #EEF2FF 0%, #C7D2FE 100%);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .guide-header-icon svg { width: 18px; height: 18px; fill: var(--primary); }
+    .guide-close {
+      position: absolute; top: 14px; right: 14px;
+      background: #F1F5F9; border: none; cursor: pointer;
+      color: var(--text-muted); font-size: 1rem; line-height: 1;
+      padding: 4px 8px; border-radius: 50%; transition: all 0.15s;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    }
+    .guide-close:hover { background: #E2E8F0; color: var(--text); }
+    .guide-list { list-style: none; padding: 0; }
+    .guide-list li {
+      font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+      padding: 5px 0; display: flex; align-items: flex-start; gap: 10px;
+    }
+    .guide-list li svg {
+      width: 18px; height: 18px; fill: #22C55E; flex-shrink: 0; margin-top: 2px;
+    }
+    .guide-toggle {
+      font-size: 0.78rem; color: var(--text-muted); background: none;
+      border: none; cursor: pointer; padding: 8px 0; transition: color 0.15s;
+      font-family: inherit;
+    }
+    .guide-toggle:hover { color: var(--primary); }
+
     /* ===== Tabs ===== */
     .tabs {
       display: flex;
@@ -128,6 +194,7 @@
       border-radius: var(--radius);
       padding: 4px;
       box-shadow: var(--shadow);
+      position: relative;
     }
     .tab {
       flex: 1;
@@ -199,12 +266,12 @@
     .day-checkbox label { font-size: 0.85rem; font-weight: 500; cursor: pointer; }
 
     .save-btn {
-      padding: 12px 32px;
+      padding: 16px 48px;
       background: var(--primary);
       color: white;
       border: none;
-      border-radius: var(--radius-sm);
-      font-size: 1rem;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
@@ -212,9 +279,10 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.25);
     }
-    .save-btn:hover { background: var(--primary-hover); }
-    .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .save-btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(79,70,229,0.3); }
+    .save-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
     .save-status {
       display: inline-flex;
       align-items: center;
@@ -358,11 +426,37 @@
         <button class="copy-btn" onclick="copyUrl()">URLをコピー</button>
       </div>
 
+      <!-- Guide Banner -->
+      <div class="guide-banner" id="guideBanner" style="display:none;">
+        <button class="guide-close" onclick="closeGuide()" title="閉じる">&times;</button>
+        <div class="guide-header">
+          <div class="guide-header-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+          </div>
+          使い方ガイド
+        </div>
+        <ul class="guide-list">
+          <li>
+            <svg viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>
+            <span><strong>連携済みの Google カレンダーに予定がある時間帯は、自動的に「予約不可」になります。</strong>ブロックしたい時間がある場合は、Google カレンダーに予定を追加するだけで OK です。</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>
+            <span><strong>予約が入ると、自動で Google カレンダーに予定が追加されます。</strong>手動での転記は不要です。</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>
+            <span><strong>予約ページの URL を相手に共有するだけで、予約受付が始まります。</strong></span>
+          </li>
+        </ul>
+      </div>
+
       <!-- Tabs -->
       <div class="tabs">
         <button class="tab active" id="tabSettings" onclick="switchTab('settings')">設定</button>
         <button class="tab" id="tabBookings" onclick="switchTab('bookings')">予約一覧</button>
         <button class="tab" id="tabBilling" onclick="switchTab('billing')">プラン</button>
+        <button class="guide-toggle" id="guideToggle" onclick="showGuide()" style="display:none;">使い方ガイド</button>
       </div>
 
       <!-- Settings Tab -->
@@ -405,7 +499,7 @@
             <div class="form-group">
               <label>Google カレンダー ID</label>
               <input type="text" class="form-input" id="settCalendarId" placeholder="you@gmail.com">
-              <div class="hint">通常はGmailアドレスです。別のカレンダーを使う場合は、カレンダーの設定画面からIDを確認してください。</div>
+              <div class="hint">通常はGmailアドレスです。このカレンダーの予定と自動同期され、予定がある時間帯は予約不可になります。</div>
             </div>
           </div>
 
@@ -482,7 +576,7 @@
             </div>
           </div>
 
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;margin-bottom:40px;">
             <button type="submit" class="save-btn" id="saveBtn">設定を保存</button>
             <span class="save-status" id="saveStatus">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
@@ -558,7 +652,7 @@
             <div id="billingUpgrade" style="text-align:center; padding:20px 0;">
               <p style="color:var(--text-secondary); margin-bottom:12px; font-size:0.9rem;">Pro プランにアップグレードすると、予約件数が無制限になります。</p>
               <button onclick="handleUpgrade()" style="padding:12px 32px; background:var(--primary); color:white; border:none; border-radius:var(--radius-sm); font-size:1rem; font-weight:600; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
-                Pro にアップグレード（¥100/月）
+                Pro にアップグレード（¥300/月）
               </button>
             </div>
 
@@ -574,6 +668,15 @@
       </div>
     </div>
   </div>
+
+  <footer style="text-align:center;padding:32px 40px;color:var(--text-muted);font-size:0.8rem;border-top:1px solid var(--border);max-width:800px;margin:0 auto;">
+    <div style="margin-bottom:8px;">
+      <a href="/legal/terms.html" style="color:var(--text-muted);text-decoration:none;margin:0 12px;transition:color 0.15s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">利用規約</a>
+      <a href="/legal/privacy.html" style="color:var(--text-muted);text-decoration:none;margin:0 12px;transition:color 0.15s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">プライバシーポリシー</a>
+      <a href="/legal/operator.html" style="color:var(--text-muted);text-decoration:none;margin:0 12px;transition:color 0.15s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">運営者情報</a>
+    </div>
+    <div>BookMe by Shinno Studio</div>
+  </footer>
 
   <script>
     /* ===== State ===== */
@@ -637,6 +740,13 @@
       document.getElementById('loadingScreen').style.display = 'none';
       document.getElementById('dashboardContent').style.display = 'block';
 
+      // Guide banner
+      if (localStorage.getItem('bookme_guide_closed') !== '1') {
+        document.getElementById('guideBanner').style.display = 'block';
+      } else {
+        document.getElementById('guideToggle').style.display = 'inline-block';
+      }
+
       // Set form values
       document.getElementById('settOwnerName').value = settings.ownerName || '';
       document.getElementById('settOwnerEmail').value = settings.ownerEmail || '';
@@ -663,6 +773,17 @@
       document.getElementById('baseUrlPrefix').textContent = baseUrl + '/';
       document.getElementById('bookingUrl').textContent = baseUrl + '/' + settings.slug;
       document.getElementById('bookingPageLink').href = '/' + settings.slug;
+    }
+
+    /* ===== Guide ===== */
+    function closeGuide() {
+      document.getElementById('guideBanner').style.display = 'none';
+      document.getElementById('guideToggle').style.display = 'inline-block';
+      localStorage.setItem('bookme_guide_closed', '1');
+    }
+    function showGuide() {
+      document.getElementById('guideBanner').style.display = 'block';
+      document.getElementById('guideToggle').style.display = 'none';
     }
 
     /* ===== Tabs ===== */
